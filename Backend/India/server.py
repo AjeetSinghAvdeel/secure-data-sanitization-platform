@@ -18,6 +18,10 @@ import tempfile
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
+# --- Load environment variables ---
+from dotenv import load_dotenv
+load_dotenv()
+
 # --- Firebase ---
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -25,14 +29,28 @@ from firebase_admin import credentials, firestore
 db = None
 try:
     if not firebase_admin._apps:
-        if os.path.exists("firebase_key.json"):
-            cred = credentials.Certificate("firebase_key.json")  # service account
+        firebase_key_json = os.getenv("FIREBASE_KEY_JSON")
+        
+        if firebase_key_json:
+            # Load from environment variable (JSON string)
+            try:
+                key_dict = json.loads(firebase_key_json)
+                cred = credentials.Certificate(key_dict)
+                firebase_admin.initialize_app(cred)
+                db = firestore.client()
+                print("[OK] Firebase initialized successfully from FIREBASE_KEY_JSON env var")
+            except Exception as e:
+                print(f"[WARNING] Failed to parse FIREBASE_KEY_JSON: {e}")
+                db = None
+        elif os.path.exists("firebase_key.json"):
+            # Fallback: load from local file (for development)
+            cred = credentials.Certificate("firebase_key.json")
             firebase_admin.initialize_app(cred)
             db = firestore.client()
-            print("[OK] Firebase initialized successfully")
+            print("[OK] Firebase initialized successfully from firebase_key.json")
         else:
-            print("[WARNING] firebase_key.json not found. Firebase features will be disabled.")
-            print("  Certificates will not be saved to Firebase, but local operations will work.")
+            print("[WARNING] FIREBASE_KEY_JSON env var not set and firebase_key.json not found.")
+            print("  Firebase features will be disabled. Set FIREBASE_KEY_JSON env var to enable.")
 except Exception as e:
     print(f"[WARNING] Firebase initialization failed: {e}")
     print("  Certificates will not be saved to Firebase, but local operations will work.")

@@ -5,4 +5,9 @@ Backend/India/firebase_key.json
 Backend/India/private_key.pem
 private_key.pem
 
+# Environment variables (local configuration, never commit)
+.env
+.env.local
+.env.*.local
+
 # Frontend local Firebase config (keep sanitized config out of history)
