@@ -5,5 +5,4 @@ Backend/India/firebase_key.json
 Backend/India/private_key.pem
 private_key.pem
 
-# Frontend local Firebase config (keep sanitized config in repo instead)
-Frontend/cyber-wipe-ai-main/src/firebaseConfig.ts
+# Frontend local Firebase config (keep sanitized config out of history)
