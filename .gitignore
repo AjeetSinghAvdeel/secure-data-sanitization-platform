@@ -1,1 +1,9 @@
 Backend/India/firebase_key.json
+
+
+# Private keys and local secrets
+Backend/India/private_key.pem
+private_key.pem
+
+# Frontend local Firebase config (keep sanitized config in repo instead)
+Frontend/cyber-wipe-ai-main/src/firebaseConfig.ts
