@@ -1,8 +1,8 @@
-Backend/India/firebase_key.json
+Backend/Server/firebase_key.json
 
 
 # Private keys and local secrets
-Backend/India/private_key.pem
+Backend/Server/private_key.pem
 private_key.pem
 
 # Environment variables (local configuration, never commit)
@@ -10,4 +10,23 @@ private_key.pem
 .env.local
 .env.*.local
 
-# Frontend local Firebase config (keep sanitized config out of history)
+# Node and Python
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
