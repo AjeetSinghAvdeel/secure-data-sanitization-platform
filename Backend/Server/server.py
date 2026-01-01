@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel
-from typing import Union
+from typing import Union, List, Optional
 import secrets
 from datetime import datetime
 import uuid
@@ -101,6 +101,13 @@ class SettingsUpdate(BaseModel):
 class VerifyWipeRequest(BaseModel):
     file_path: str
     original_hash: str = None
+
+
+class SelectiveWipeRequest(BaseModel):
+    mountpoint: str
+    patterns: List[str]
+    passes: int = 1
+    dry_run: bool = False
 
 
 # ---------- Settings (new) ----------
@@ -389,6 +396,80 @@ def download_certificate(cert_id: str, user: dict = Depends(verify_firebase_toke
         return FileResponse(pdf_path, media_type="application/pdf", filename=f"certificate_{cert_id}.pdf")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- Selective Wipe (pattern-based, removable devices only) ----------
+@app.post("/wipe-selective")
+def wipe_selective(req: SelectiveWipeRequest, user: dict = Depends(verify_firebase_token)):
+    """Wipe files matching provided glob patterns under a removable device mountpoint.
+    This endpoint is intentionally restricted to removable devices to avoid accidental host wipes.
+    """
+    mp = req.mountpoint
+    passes = max(1, req.passes)
+    patterns = req.patterns or []
+    dry_run = bool(req.dry_run)
+
+    if not os.path.exists(mp):
+        raise HTTPException(status_code=404, detail="Mountpoint not found")
+
+    # Ensure the mountpoint is a removable device discovered by the scanner
+    removable = [d["mountpoint"] for d in _get_removable_devices()]
+    if mp not in removable:
+        raise HTTPException(status_code=403, detail="Selective wiping is only allowed on removable devices")
+
+    import fnmatch
+    matched_files = []
+    for root, dirs, files in os.walk(mp):
+        for name in files:
+            file_path = os.path.join(root, name)
+            for pat in patterns:
+                try:
+                    if fnmatch.fnmatch(name, pat) or fnmatch.fnmatch(file_path, pat):
+                        matched_files.append(file_path)
+                        break
+                except Exception:
+                    continue
+
+    # Remove duplicates
+    matched_files = list(dict.fromkeys(matched_files))
+
+    if dry_run:
+        return {"status": "dry_run", "matches": matched_files, "count": len(matched_files)}
+
+    files_wiped = 0
+    for file_path in matched_files:
+        try:
+            if not os.path.exists(file_path):
+                continue
+            length = os.path.getsize(file_path)
+            with open(file_path, "r+b") as f:
+                for _ in range(passes):
+                    f.seek(0)
+                    f.write(secrets.token_bytes(length))
+                    f.flush()
+                    os.fsync(f.fileno())
+            os.remove(file_path)
+            files_wiped += 1
+        except Exception as e:
+            print(f"Error wiping {file_path}: {e}")
+
+    cert_id = str(uuid.uuid4())[:8]
+    cert = {
+        "id": cert_id,
+        "device": mp,
+        "method": f"Selective Wipe ({len(patterns)} patterns, {passes}-pass)",
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "VALID",
+        "files_wiped": files_wiped,
+        "verification_data": {
+            "matches": len(matched_files),
+            "passes": passes,
+            "patterns": patterns
+        }
+    }
+    save_certificate(cert)
+    auto_register_certificate(cert)
+    return {"status": "success", "message": f"Selective wipe completed on {mp}", "certificate": cert, "files_wiped": files_wiped}
 
 
 # ---------- Wipe USB ----------
