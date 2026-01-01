@@ -165,6 +165,7 @@ Frontend will be available at: **http://localhost:8080** (or as shown in termina
 ## 🔐 Security Features
 
 - **Environment-based secrets:** All sensitive credentials loaded from `.env.local` (never committed to git)
+- **Firebase authentication:** Protected sensitive endpoints require Firebase ID tokens (server-side validation)
 - **Tamper-proof certificates:** RSA-2048 signed digital certificates for every wipe operation
 - **Multi-pass wiping:** Support for DOD 5220.22-M compliant 3-pass and random overwrite patterns
 - **Compliance tracking:** Monitor NIST, GDPR, and DOD standards adherence
@@ -175,21 +176,37 @@ Frontend will be available at: **http://localhost:8080** (or as shown in termina
 
 ## 📋 API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | Server status |
-| `GET` | `/api/health` | System health (CPU, memory, disk) |
-| `GET` | `/api/settings` | Get application settings |
-| `POST` | `/api/settings` | Update settings |
-| `GET` | `/devices` | List connected USB devices |
-| `GET` | `/system-analysis` | Analyze system storage |
-| `POST` | `/wipe-usb` | Start secure wipe operation |
-| `GET` | `/api/certificates` | List all certificates |
-| `GET` | `/api/certificates/{cert_id}` | Get specific certificate |
-| `GET` | `/api/certificates/download/{cert_id}` | Download certificate PDF |
-| `GET` | `/compliance` | Compliance scores (NIST, GDPR, DOD) |
-| `GET` | `/tamper/verify/{cert_id}` | Verify certificate integrity |
-| `/docs` | Swagger UI | Interactive API documentation |
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---|
+| `GET` | `/` | Server status | ❌ |
+| `GET` | `/api/health` | System health (CPU, memory, disk) | ❌ |
+| `GET` | `/api/settings` | Get application settings | ❌ |
+| `POST` | `/api/settings` | Update settings | ✅ Token |
+| `GET` | `/devices` | List connected USB devices | ❌ |
+| `GET` | `/system-analysis` | Analyze system storage | ❌ |
+| `POST` | `/wipe-usb` | Start secure wipe operation | ✅ Token |
+| `GET` | `/api/certificates` | List all certificates | ❌ |
+| `GET` | `/api/certificates/{cert_id}` | Get specific certificate | ❌ |
+| `GET` | `/api/certificates/download/{cert_id}` | Download certificate PDF | ✅ Token |
+| `GET` | `/compliance` | Compliance scores (NIST, GDPR, DOD) | ❌ |
+| `GET` | `/tamper/verify/{cert_id}` | Verify certificate integrity | ❌ |
+| `POST` | `/api/verify-wipe` | Verify file wipe completeness | ✅ Token |
+| `POST` | `/api/verify-directory` | Verify directory wipe | ✅ Token |
+| `GET` | `/system-status` | System status | ❌ |
+| `/docs` | Swagger UI | Interactive API documentation | ❌ |
+
+### Authentication
+
+Protected endpoints require a Firebase ID token in the `Authorization` header:
+
+```bash
+curl -X POST http://localhost:8000/wipe-usb \
+  -H "Authorization: Bearer <firebase_id_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"mountpoint": "/path/to/device"}'
+```
+
+Tokens are obtained after user login via Firebase Auth (frontend handles this automatically).
 
 ---
 

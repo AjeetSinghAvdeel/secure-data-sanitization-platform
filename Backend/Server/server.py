@@ -3,7 +3,7 @@ import shutil
 import platform
 import psutil
 import subprocess
-from fastapi import FastAPI, HTTPException, UploadFile, File, Request
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -23,6 +23,9 @@ from dotenv import load_dotenv
 # Load environment files: prefer .env.local then fallback to .env
 load_dotenv('.env.local', override=False)
 load_dotenv(override=False)
+
+# --- Import auth utils ---
+from auth_utils import verify_firebase_token, verify_optional_token
 
 # --- Firebase ---
 import firebase_admin
@@ -125,7 +128,7 @@ def get_settings():
     return load_settings()
 
 @app.post("/api/settings")
-def update_settings(new_settings: Union[SettingsUpdate, dict]):
+def update_settings(new_settings: Union[SettingsUpdate, dict], user: dict = Depends(verify_firebase_token)):
     # Handle both dict and Pydantic model
     if isinstance(new_settings, dict):
         settings_dict = new_settings
@@ -375,7 +378,7 @@ def get_certificate(cert_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/certificates/download/{cert_id}")
-def download_certificate(cert_id: str):
+def download_certificate(cert_id: str, user: dict = Depends(verify_firebase_token)):
     if db is None:
         raise HTTPException(status_code=503, detail="Firebase not initialized")
     try:
@@ -390,7 +393,7 @@ def download_certificate(cert_id: str):
 
 # ---------- Wipe USB ----------
 @app.post("/wipe-usb")
-def wipe_usb(req: WipeRequest):
+def wipe_usb(req: WipeRequest, user: dict = Depends(verify_firebase_token)):
     mp = req.mountpoint
     passes = max(1, req.passes)
     if not os.path.exists(mp):
@@ -565,7 +568,7 @@ def verify_certificate(cert_id: str):
 
 # ---------- Wipe Verification ----------
 @app.post("/api/verify-wipe")
-def verify_wipe_endpoint(req: VerifyWipeRequest):
+def verify_wipe_endpoint(req: VerifyWipeRequest, user: dict = Depends(verify_firebase_token)):
     """Verify that a file has been properly wiped"""
     try:
         from verify_wipe import verify_wipe_completeness
@@ -575,7 +578,7 @@ def verify_wipe_endpoint(req: VerifyWipeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/verify-directory")
-def verify_directory_wipe_endpoint(directory_path: str):
+def verify_directory_wipe_endpoint(directory_path: str, user: dict = Depends(verify_firebase_token)):
     """Verify that all files in a directory have been wiped"""
     try:
         from verify_wipe import verify_directory_wipe
