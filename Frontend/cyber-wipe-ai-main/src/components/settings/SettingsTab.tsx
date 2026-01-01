@@ -76,6 +76,7 @@ const Settings = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      if (typeof window !== "undefined") sessionStorage.removeItem("loggedIn");
       window.location.href = "/login"; // redirect after logout
     } catch (error) {
       console.error("Logout failed:", error);

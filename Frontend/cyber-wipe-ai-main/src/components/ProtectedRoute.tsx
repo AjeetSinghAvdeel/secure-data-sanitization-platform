@@ -9,8 +9,9 @@ interface Props {
 
 const ProtectedRoute = ({ children }: Props) => {
   const user = auth.currentUser;
+  const sessionActive = typeof window !== "undefined" && sessionStorage.getItem("loggedIn") === "1";
 
-  if (!user) {
+  if (!user || !sessionActive) {
     return <Navigate to="/login" replace />;
   }
 

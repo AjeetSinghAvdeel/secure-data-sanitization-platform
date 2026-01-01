@@ -1,4 +1,13 @@
 Backend/Server/firebase_key.json
+# Local environment files
+.env.local
+Backend/Server/.env.local
+Frontend/cyber-wipe-ai-main/.env.local
+
+# Private keys
+*.pem
+*.key
+private_key.pem
 
 
 # Private keys and local secrets

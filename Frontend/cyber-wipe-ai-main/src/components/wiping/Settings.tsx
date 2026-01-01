@@ -38,6 +38,7 @@ export default function Settings() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      if (typeof window !== "undefined") sessionStorage.removeItem("loggedIn");
       window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);

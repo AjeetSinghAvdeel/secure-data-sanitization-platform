@@ -20,7 +20,9 @@ from reportlab.pdfgen import canvas
 
 # --- Load environment variables ---
 from dotenv import load_dotenv
-load_dotenv()
+# Load environment files: prefer .env.local then fallback to .env
+load_dotenv('.env.local', override=False)
+load_dotenv(override=False)
 
 # --- Firebase ---
 import firebase_admin

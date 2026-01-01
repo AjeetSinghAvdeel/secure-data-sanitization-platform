@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "../firebaseConfig";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
@@ -26,11 +26,15 @@ export default function Login() {
 
       if (docSnap.exists()) {
         console.log("User data:", docSnap.data());
+        // Mark explicit session active (must be set at login)
+        if (typeof window !== "undefined") sessionStorage.setItem("loggedIn", "1");
+        navigate("/dashboard"); // redirect after login
       } else {
-        console.warn("⚠️ No extra user data found in Firestore.");
+        // User authenticated in Firebase Auth but not registered in Firestore
+        await signOut(auth);
+        if (typeof window !== "undefined") sessionStorage.removeItem("loggedIn");
+        setError("Account not registered. Please register first.");
       }
-
-      navigate("/dashboard"); // redirect after login
     } catch (err: any) {
       setError(err.message);
     }

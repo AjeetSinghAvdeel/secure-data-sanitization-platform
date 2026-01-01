@@ -112,9 +112,10 @@ pip install -r requirements.txt
 cp .env.example .env.local
 ```
 
-Edit `.env.local` and add your Firebase service account JSON:
+Edit `.env.local` and add your Firebase service account JSON (do not commit):
 ```bash
-FIREBASE_KEY_JSON='{"type":"service_account","project_id":"...","private_key":"..."}'
+# Put the full service account JSON as a single-line string, for example:
+FIREBASE_KEY_JSON='REPLACE_WITH_FIREBASE_SERVICE_ACCOUNT_JSON'
 ```
 
 5. **Run the server:**
@@ -145,10 +146,10 @@ npm install
 cp .env.example .env.local
 ```
 
-Edit `.env.local` with your Firebase web config (all values are optional if you only want local mode):
+Edit `.env.local` with your Firebase web config (placeholders shown; do not commit `.env.local`):
 ```bash
-VITE_FIREBASE_API_KEY=AIzaSyBq...
-VITE_FIREBASE_AUTH_DOMAIN=project.firebaseapp.com
+VITE_FIREBASE_API_KEY=REPLACE_WITH_VITE_FIREBASE_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN=REPLACE_WITH_VITE_FIREBASE_AUTH_DOMAIN
 # ... etc
 ```
 
@@ -217,8 +218,9 @@ Frontend will be available at: **http://localhost:8080** (or as shown in termina
 
 ### Backend Environment Variables (`.env.local`)
 ```bash
-# Firebase service account (as JSON string)
-FIREBASE_KEY_JSON='{"type":"service_account",...}'
+# Firebase service account (as JSON string). Do NOT commit this file.
+# Example placeholder:
+FIREBASE_KEY_JSON='REPLACE_WITH_FIREBASE_SERVICE_ACCOUNT_JSON'
 
 # Server
 PORT=8000
@@ -227,14 +229,14 @@ HOST=0.0.0.0
 
 ### Frontend Environment Variables (`.env.local`)
 ```bash
-# Firebase Web Config (all optional)
-VITE_FIREBASE_API_KEY=AIzaSy...
-VITE_FIREBASE_AUTH_DOMAIN=project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=project-id
-VITE_FIREBASE_STORAGE_BUCKET=project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=1:123:web:abc
-VITE_FIREBASE_MEASUREMENT_ID=G-XXXXX
+# Firebase Web Config (placeholders shown; do NOT commit `.env.local`)
+VITE_FIREBASE_API_KEY=REPLACE_WITH_VITE_FIREBASE_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN=REPLACE_WITH_VITE_FIREBASE_AUTH_DOMAIN
+VITE_FIREBASE_PROJECT_ID=REPLACE_WITH_VITE_FIREBASE_PROJECT_ID
+VITE_FIREBASE_STORAGE_BUCKET=REPLACE_WITH_VITE_FIREBASE_STORAGE_BUCKET
+VITE_FIREBASE_MESSAGING_SENDER_ID=REPLACE_WITH_VITE_FIREBASE_MESSAGING_SENDER_ID
+VITE_FIREBASE_APP_ID=REPLACE_WITH_VITE_FIREBASE_APP_ID
+VITE_FIREBASE_MEASUREMENT_ID=REPLACE_WITH_VITE_FIREBASE_MEASUREMENT_ID
 ```
 
 ---
