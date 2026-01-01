@@ -37,6 +37,11 @@ export default function UsbDemo() {
   const [recoverInFlight, setRecoverInFlight] = useState<number | null>(null);
   const [confirmAction, setConfirmAction] = useState(false);
   const [message, setMessage] = useState<string>("");
+  const [patterns, setPatterns] = useState<string>("");
+  const [passes, setPasses] = useState<number>(1);
+  const [dryRun, setDryRun] = useState<boolean>(true);
+  const [selectiveInFlight, setSelectiveInFlight] = useState<boolean>(false);
+  const [selectiveResult, setSelectiveResult] = useState<any>(null);
 
   const selectedDevice = useMemo(() => devices.find(d => (d.mountpoint === selected || d.device === selected)), [devices, selected]);
 
@@ -61,6 +66,43 @@ export default function UsbDemo() {
     refreshDevices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleSelectiveWipe = async () => {
+    if (!selected) return;
+    setSelectiveInFlight(true);
+    setSelectiveResult(null);
+    setMessage("");
+    try {
+      // build payload
+      const pats = patterns.split(",").map(p => p.trim()).filter(Boolean);
+      const payload = { mountpoint: selected, patterns: pats, passes, dry_run: dryRun };
+
+      // get firebase id token if available
+      let headers: any = { "Content-Type": "application/json" };
+      try {
+        // @ts-ignore
+        const token = await (window as any).firebase?.auth()?.currentUser?.getIdToken();
+        if (!token && (window as any).firebase && (window as any).firebase.auth && (window as any).firebase.auth().currentUser) {
+          // try alternative
+          // @ts-ignore
+          const t2 = await (window as any).firebase.auth().currentUser.getIdToken();
+          if (t2) headers.Authorization = `Bearer ${t2}`;
+        } else if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (e) {
+        // ignore - request will be unauthenticated
+      }
+
+      const res = await axios.post("http://127.0.0.1:8000/wipe-selective", payload, { headers, timeout: 600000 });
+      setSelectiveResult(res.data);
+      setMessage("Selective wipe completed (or dry-run results shown).");
+    } catch (e: any) {
+      setMessage(e?.response?.data?.detail || e?.message || "Selective wipe failed");
+    } finally {
+      setSelectiveInFlight(false);
+    }
+  };
 
   const scan = async () => {
     if (!selected) return;
@@ -144,6 +186,45 @@ export default function UsbDemo() {
             <button className="px-3 py-2 rounded bg-indigo-600 text-white disabled:opacity-50" onClick={scan} disabled={!selected || scanInFlight}>
               {scanInFlight ? "Scanning..." : "Scan Deleted Files"}
             </button>
+          </div>
+        </div>
+
+        {/* Selective Wipe Panel */}
+        <div className="col-span-2 border rounded p-4">
+          <h2 className="font-semibold mb-3">Selective Wipe</h2>
+          <p className="text-sm text-muted-foreground mb-3">Enter glob patterns (comma separated) to match files to wipe on the selected removable device.</p>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium">Patterns</label>
+              <input
+                type="text"
+                placeholder="e.g. *.txt, *.log, secret-*.db"
+                value={patterns}
+                onChange={(e) => setPatterns(e.target.value)}
+                className="w-full p-2 mt-1 rounded bg-gray-900 text-white"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="block text-sm font-medium">Passes</label>
+              <input type="number" min={1} value={passes} onChange={(e) => setPasses(Number(e.target.value))} className="w-24 p-2 rounded bg-gray-900 text-white" />
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} />
+                Dry run
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button className="px-3 py-2 rounded bg-red-600 text-white" onClick={handleSelectiveWipe} disabled={!selected || selectiveInFlight}>
+                {selectiveInFlight ? "Running..." : "Run Selective Wipe"}
+              </button>
+              <button className="px-3 py-2 rounded bg-gray-700 text-white" onClick={() => { setPatterns(""); setPasses(1); setDryRun(true); }}>
+                Reset
+              </button>
+            </div>
+            {selectiveResult && (
+              <div className="mt-2 p-2 rounded bg-gray-50 text-sm">
+                <pre className="whitespace-pre-wrap">{JSON.stringify(selectiveResult, null, 2)}</pre>
+              </div>
+            )}
           </div>
         </div>
 
