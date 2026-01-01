@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth } from "../firebaseConfig";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
-
-const db = getFirestore();
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -15,6 +13,12 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!auth || !db) {
+      setError("Firebase not configured. Set VITE_FIREBASE_* variables for local development.");
+      return;
+    }
+
     try {
       // ✅ Sign in with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);

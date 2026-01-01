@@ -13,6 +13,15 @@ import { auth } from "@/firebaseConfig";
 import { updateProfile, updatePassword, signOut } from "firebase/auth";
 
 const Settings = () => {
+  if (!auth) {
+    return (
+      <div className="p-6 text-white">
+        <h2 className="text-2xl font-bold mb-4">Firebase Not Configured</h2>
+        <p className="text-gray-400">Set VITE_FIREBASE_* environment variables to enable authentication and settings.</p>
+      </div>
+    );
+  }
+
   const user = auth.currentUser;
   const [displayName, setDisplayName] = useState(user?.displayName || "");
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");

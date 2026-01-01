@@ -13,6 +13,18 @@ import { addDoc, collection } from "firebase/firestore";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("scan");
+
+  if (!auth || !db) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center p-6">
+          <h2 className="text-2xl font-bold mb-4">Firebase Not Configured</h2>
+          <p className="text-gray-400">Set VITE_FIREBASE_* variables in your local environment to enable authentication and Firestore.</p>
+        </div>
+      </div>
+    );
+  }
+
   const user = auth.currentUser;
 
   // ✅ Log wipe certificate into Firestore

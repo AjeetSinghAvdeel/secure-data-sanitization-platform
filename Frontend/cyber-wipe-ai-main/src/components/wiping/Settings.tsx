@@ -8,6 +8,15 @@ import { auth } from "@/firebaseConfig";
 import { signOut } from "firebase/auth";
 
 export default function Settings() {
+  if (!auth) {
+    return (
+      <div className="p-6 text-white">
+        <h2 className="text-2xl font-bold mb-4">Firebase Not Configured</h2>
+        <p className="text-gray-400">Set VITE_FIREBASE_* environment variables to enable authentication.</p>
+      </div>
+    );
+  }
+
   const [settings, setSettings] = useState({
     wipeMethod: "3-pass",
     generateCerts: true,
